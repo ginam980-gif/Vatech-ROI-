@@ -42,6 +42,9 @@ const state = {
 /* ================= DOM ================= */
 const $ = (id) => document.getElementById(id);
 
+// 배분 블록들을 저장할 배열
+let occupancyBlocks = [];
+
 /* ================= Calculations ================= */
 function calcIncome() {
   const c = (i) => i.fee * i.perDay * i.days;
@@ -70,6 +73,38 @@ function calcCost() {
   return { rent, doctor, staff, total };
 }
 
+/* ================= Input Handler (iPad 버그 수정) ================= */
+function createInputHandler(input, onChange) {
+  let isUpdating = false;  // 재귀 방지 플래그
+  
+  const handleInput = (e) => {
+    if (isUpdating) return;  // 프로그래밍 방식의 업데이트는 무시
+    
+    isUpdating = true;
+    
+    const raw = parseNumber(e.target.value);
+    onChange(raw);
+    
+    // 커서 위치 저장
+    const cursorPosition = e.target.selectionStart;
+    const oldLength = e.target.value.length;
+    
+    // 포맷된 값 설정
+    const formatted = formatNumber(raw);
+    e.target.value = formatted;
+    
+    // 커서 위치 복원 (콤마 추가/제거를 고려)
+    const newLength = formatted.length;
+    const lengthDiff = newLength - oldLength;
+    const newCursorPosition = Math.max(0, cursorPosition + lengthDiff);
+    e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+    
+    isUpdating = false;
+  };
+  
+  return handleInput;
+}
+
 /* ================= UI Blocks ================= */
 function inputBlock(label, desc, value, onChange) {
   const div = document.createElement("div");
@@ -77,58 +112,72 @@ function inputBlock(label, desc, value, onChange) {
   div.innerHTML = `
     <p class="text-sm font-medium">${label}</p>
     ${desc ? `<p class="text-xs text-gray-500">${desc}</p>` : ""}
-    <input type="text" class="input">
+    <input type="text" inputmode="numeric" class="input">
   `;
 
   const input = div.querySelector("input");
   input.value = formatNumber(value);
-
-  input.oninput = (e) => {
-    const raw = parseNumber(e.target.value);
-    onChange(raw);
-    input.value = formatNumber(raw);
-  };
+  input.addEventListener('input', createInputHandler(input, onChange));
 
   return div;
 }
 
-function occupancyBlock(title, desc, base, ratio, onBase, onRatio, result) {
+function occupancyBlock(title, desc, base, ratio, onBase, onRatio, getResult) {
   const div = document.createElement("div");
   div.className = "bg-gray-50-box space-y-2";
   div.innerHTML = `
     <p class="font-medium text-sm">${title}</p>
     <p class="text-xs text-gray-500">${desc}</p>
     <div class="grid grid-cols-2 gap-2">
-      <input type="text" class="input">
-      <input type="text" class="input text-right">
+      <input type="text" inputmode="numeric" class="input">
+      <input type="text" inputmode="numeric" class="input text-right">
     </div>
-    <p class="text-xs text-gray-500">配分後: ${currency(result)}</p>
+    <p class="text-xs text-gray-500 result-text">配分後: ${currency(getResult())}</p>
   `;
 
   const inputs = div.querySelectorAll("input");
+  const resultText = div.querySelector(".result-text");
+
+  // 결과 업데이트 함수를 DOM 요소에 저장
+  div.updateResult = () => {
+    resultText.textContent = `配分後: ${currency(getResult())}`;
+  };
 
   // 첫 번째: 금액
   inputs[0].value = formatNumber(base);
-
+  
   // 두 번째: 비율 (% 표시)
   inputs[1].value = ratio === "" ? "" : `${formatNumber(ratio)}%`;
 
-  inputs[0].oninput = (e) => {
+  // 금액 입력 핸들러
+  let isUpdatingBase = false;
+  inputs[0].addEventListener('input', (e) => {
+    if (isUpdatingBase) return;
+    isUpdatingBase = true;
+    
     const v = parseNumber(e.target.value);
     onBase(v);
     e.target.value = formatNumber(v);
-  };
+    
+    isUpdatingBase = false;
+  });
 
-  inputs[1].oninput = (e) => {
+  // 비율 입력 핸들러
+  let isUpdatingRatio = false;
+  inputs[1].addEventListener('input', (e) => {
+    if (isUpdatingRatio) return;
+    isUpdatingRatio = true;
+    
     // % 제거 후 숫자만 추출
     const v = parseNumber(e.target.value.replace(/%/g, ""));
     onRatio(v);
     e.target.value = v === "" ? "" : `${formatNumber(v)}%`;
-  };
+    
+    isUpdatingRatio = false;
+  });
 
   return div;
 }
-
 
 function incomeEditor(key, label, desc) {
   const data = state.income[key];
@@ -143,9 +192,9 @@ function incomeEditor(key, label, desc) {
       </p>
     </div>
     <div class="grid grid-cols-3 gap-2">
-      <input class="input" type="text">
-      <input class="input" type="text">
-      <input class="input" type="text">
+      <input class="input" type="text" inputmode="numeric">
+      <input class="input" type="text" inputmode="numeric">
+      <input class="input" type="text" inputmode="numeric">
     </div>
   `;
 
@@ -154,21 +203,41 @@ function incomeEditor(key, label, desc) {
   i[1].value = formatNumber(data.perDay);
   i[2].value = formatNumber(data.days);
 
-  i[0].oninput = (e) => {
+  // 각 입력 필드에 대한 업데이트 플래그
+  let isUpdating = [false, false, false];
+
+  i[0].addEventListener('input', (e) => {
+    if (isUpdating[0]) return;
+    isUpdating[0] = true;
+    
     data.fee = parseNumber(e.target.value);
     e.target.value = formatNumber(data.fee);
     render();
-  };
-  i[1].oninput = (e) => {
+    
+    isUpdating[0] = false;
+  });
+
+  i[1].addEventListener('input', (e) => {
+    if (isUpdating[1]) return;
+    isUpdating[1] = true;
+    
     data.perDay = parseNumber(e.target.value);
     e.target.value = formatNumber(data.perDay);
     render();
-  };
-  i[2].oninput = (e) => {
+    
+    isUpdating[1] = false;
+  });
+
+  i[2].addEventListener('input', (e) => {
+    if (isUpdating[2]) return;
+    isUpdating[2] = true;
+    
     data.days = parseNumber(e.target.value);
     e.target.value = formatNumber(data.days);
     render();
-  };
+    
+    isUpdating[2] = false;
+  });
 
   return div;
 }
@@ -224,6 +293,9 @@ function render() {
   $("income-total").textContent = currency(income.total);
   $("cost-total").textContent = currency(cost.total);
 
+  // 배분 블록들의 결과값 업데이트
+  occupancyBlocks.forEach(block => block.updateResult());
+
   drawChart(income.total, cost.total, net);
 }
 
@@ -231,9 +303,9 @@ function render() {
 function init() {
   const incomeWrap = $("income-blocks");
   incomeWrap.append(
-    incomeEditor("pano","PANO（パノラマ撮影）","パノラマX線撮影による保険収入"),
-    incomeEditor("ctIns","CT（保険）","保険適用CT撮影による収入"),
-    incomeEditor("ctSelf","CT（自費）","インプラント・精密診断等の自費CT撮影"),
+    incomeEditor("pano","PANO(パノラマ撮影)","パノラマX線撮影による保険収入"),
+    incomeEditor("ctIns","CT(保険)","保険適用CT撮影による収入"),
+    incomeEditor("ctSelf","CT(自費)","インプラント・精密診断等の自費CT撮影"),
     incomeEditor("ceph","CEPH","矯正用セファロ撮影による収入"),
     inputBlock("その他収入","紹介料・臨時撮影など",state.income.other,v=>{state.income.other=v;render();})
   );
@@ -241,51 +313,63 @@ function init() {
   const costWrap = $("cost-blocks");
   const costCalc = () => calcCost();
 
+  const rentBlock = occupancyBlock(
+    "家賃配分",
+    "院内設置面積分のみ按分",
+    state.cost.rent,
+    state.cost.rentRatio,
+    v=>{state.cost.rent=v;render();},
+    v=>{state.cost.rentRatio=v;render();},
+    () => costCalc().rent
+  );
+
+  const doctorBlock = occupancyBlock(
+    "医師人件費配分",
+    "CT診断・説明にかかる稼働分",
+    state.cost.doctor,
+    state.cost.doctorRatio,
+    v=>{state.cost.doctor=v;render();},
+    v=>{state.cost.doctorRatio=v;render();},
+    () => costCalc().doctor
+  );
+
+  const staffBlock = occupancyBlock(
+    "スタッフ人件費配分",
+    "撮影・運用対応分",
+    state.cost.staff,
+    state.cost.staffRatio,
+    v=>{state.cost.staff=v;render();},
+    v=>{state.cost.staffRatio=v;render();},
+    () => costCalc().staff
+  );
+
+  // 배분 블록들을 배열에 저장
+  occupancyBlocks = [rentBlock, doctorBlock, staffBlock];
+
   costWrap.append(
     inputBlock("保守メンテナンス","",state.cost.maintenance,v=>{state.cost.maintenance=v;render();}),
-    inputBlock("消耗品","（バイトビニル、手袋、アルコール）",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
+    inputBlock("消耗品","(バイトピニール・手袋・アルコール)",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
     inputBlock("電気代","CT稼働分のみ想定",state.cost.electricity,v=>{state.cost.electricity=v;render();}),
-
-    occupancyBlock(
-      "家賃配分",
-      "院内設置面積分のみ按分",
-      state.cost.rent,
-      state.cost.rentRatio,
-      v=>{state.cost.rent=v;render();},
-      v=>{state.cost.rentRatio=v;render();},
-      costCalc().rent
-    ),
-
-    occupancyBlock(
-      "医師人件費配分",
-      "CT診断・説明にかかる稼働分",
-      state.cost.doctor,
-      state.cost.doctorRatio,
-      v=>{state.cost.doctor=v;render();},
-      v=>{state.cost.doctorRatio=v;render();},
-      costCalc().doctor
-    ),
-
-    occupancyBlock(
-      "スタッフ人件費配分",
-      "撮影・運用対応分",
-      state.cost.staff,
-      state.cost.staffRatio,
-      v=>{state.cost.staff=v;render();},
-      v=>{state.cost.staffRatio=v;render();},
-      costCalc().staff
-    ),
-
+    rentBlock,
+    doctorBlock,
+    staffBlock,
     inputBlock("その他費用","通信費・雑費など",state.cost.other,v=>{state.cost.other=v;render();})
   );
 
   const eq = $("equipmentPrice");
   eq.value = formatNumber(state.equipmentPrice);
-  eq.oninput = (e) => {
+  
+  let isUpdatingEq = false;
+  eq.addEventListener('input', (e) => {
+    if (isUpdatingEq) return;
+    isUpdatingEq = true;
+    
     state.equipmentPrice = parseNumber(e.target.value);
     e.target.value = formatNumber(state.equipmentPrice);
     render();
-  };
+    
+    isUpdatingEq = false;
+  });
 
   render();
 }
