@@ -2,109 +2,236 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vatech CT ROI シミュレーター</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 40px;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 32px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .header img { height: 40px; }
+
+    h1 { font-size: 28px; margin: 0; }
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+      border-left: 6px solid #2563eb;
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    label { font-size: 14px; font-weight: 600; }
+    small { font-size: 12px; color: #6b7280; display: block; margin: 4px 0 8px; }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .kpi-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .kpi-card strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+      color: #dc2626;
+    }
+
+    .chart {
+      margin-top: 24px;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+    }
+  </style>
 </head>
 <body>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-7xl mx-auto space-y-6">
 
-      <!-- Header -->
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight">
-          Vatech CT ROI シミュレーター
-        </h1>
-        <p class="text-gray-500 mt-1">
-          各項目を自由に調整し、投資回収期間と利益構造を可視化
-        </p>
-      </div>
+<div class="container">
 
-      <!-- KPI -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="card border-red-600">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">月間純利益</p>
-            <p id="kpi-net" class="text-2xl font-bold text-red-600"></p>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">投資回収期間</p>
-            <p id="kpi-payback" class="text-2xl font-bold"></p>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">ワランティ内純利益</p>
-            <p id="kpi-profit" class="text-2xl font-bold"></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-        <!-- Income -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">月間収入</h2>
-
-            <div id="income-blocks"></div>
-
-            <div class="separator"></div>
-            <div class="flex justify-between font-semibold pt-2">
-              <span>収入合計</span>
-              <span id="income-total" class="text-red-600"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cost -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">月間費用</h2>
-
-            <div id="cost-blocks"></div>
-
-            <div class="separator"></div>
-            <div class="flex justify-between font-semibold pt-2">
-              <span>費用合計</span>
-              <span id="cost-total" class="text-red-600"></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Investment -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">投資・収支バランス</h2>
-
-            <div class="space-y-2">
-              <p class="font-medium text-sm">CT装置価格</p>
-              <p class="text-xs text-gray-500">
-                初期導入費用（本体・基本構成）
-              </p>
-              <input
-                id="equipmentPrice"
-                type="text"
-                inputmode="numeric"
-                class="input"
-              />
-            </div>
-
-            <div class="separator"></div>
-            <svg id="chart" width="100%" height="240"></svg>
-          </div>
-        </div>
-
-      </div>
+  <div class="header">
+    <img src="vatech-logo.png" alt="Vatech">
+    <div>
+      <h1>Vatech CT ROI シミュレーター</h1>
+      <p style="color:#6b7280;font-size:14px;">
+        各項目を自由に調整し、投資回収期間と利益構造を可視化
+      </p>
     </div>
   </div>
 
-  
-  <script src="app.js" defer></script>
+  <div class="kpi">
+    <div class="kpi-card">
+      月間純利益
+      <strong id="net">-</strong>
+    </div>
+    <div class="kpi-card">
+      投資回収期間
+      <strong id="payback">-</strong>
+    </div>
+    <div class="kpi-card">
+      ワランティ内純利益
+      <strong id="netProfit">-</strong>
+    </div>
+  </div>
+
+  <h2>CT装置価格</h2>
+  <div class="grid">
+    <div class="card">
+      <label>CT本体価格（円）</label>
+      <small>初期導入費用</small>
+      <input id="equipmentPrice" type="text" inputmode="numeric" value="7680000">
+    </div>
+  </div>
+
+  <h2>月間収入</h2>
+  <div class="grid">
+    <div class="card">
+      <label>PANO（パノラマ）</label>
+      <small>単価 × 回/日 × 日/月</small>
+      <input id="panoFee" type="text" inputmode="numeric" value="1500">
+      <input id="panoPerDay" type="text" inputmode="numeric" value="3">
+      <input id="panoDays" type="text" inputmode="numeric" value="22">
+    </div>
+
+    <div class="card">
+      <label>CT（保険）</label>
+      <small>保険CT撮影</small>
+      <input id="ctIFee" type="text" inputmode="numeric" value="3500">
+      <input id="ctIPerDay" type="text" inputmode="numeric" value="2">
+      <input id="ctIDays" type="text" inputmode="numeric" value="22">
+    </div>
+
+    <div class="card">
+      <label>CT（自費）</label>
+      <small>インプラント・精密診断</small>
+      <input id="ctSFee" type="text" inputmode="numeric" value="15000">
+      <input id="ctSPerDay" type="text" inputmode="numeric" value="1">
+      <input id="ctSDays" type="text" inputmode="numeric" value="22">
+    </div>
+
+    <div class="card">
+      <label>CEPH</label>
+      <small>矯正用撮影</small>
+      <input id="cephFee" type="text" inputmode="numeric" value="2000">
+      <input id="cephPerDay" type="text" inputmode="numeric" value="1">
+      <input id="cephDays" type="text" inputmode="numeric" value="22">
+    </div>
+  </div>
+
+  <h2>月間費用</h2>
+  <div class="grid">
+    <div class="card">
+      <label>メンテナンス</label>
+      <input id="maintenance" type="text" inputmode="numeric" value="30000">
+    </div>
+    <div class="card">
+      <label>消耗品</label>
+      <small>バイトビニル・手袋・アルコール</small>
+      <input id="consumables" type="text" inputmode="numeric" value="20000">
+    </div>
+    <div class="card">
+      <label>電気代</label>
+      <input id="electricity" type="text" inputmode="numeric" value="15000">
+    </div>
+  </div>
+
+  <div class="chart">
+    ※ 그래프(Recharts)는 HTML 단독 버전에서는 생략  
+    <br>→ 랜딩페이지/영업용으로는 수치 중심이 더 명확
+  </div>
+
+</div>
+
+<script>
+  const WARRANTY = 120;
+  const ids = document.querySelectorAll("input");
+
+  function num(v){
+    return parseInt(v.replace(/[^0-9]/g,"")) || 0;
+  }
+
+  function calcIncome(fee, per, days) {
+    return fee * per * days;
+  }
+
+  function update() {
+    const income =
+      calcIncome(num(panoFee.value), num(panoPerDay.value), num(panoDays.value)) +
+      calcIncome(num(ctIFee.value), num(ctIPerDay.value), num(ctIDays.value)) +
+      calcIncome(num(ctSFee.value), num(ctSPerDay.value), num(ctSDays.value)) +
+      calcIncome(num(cephFee.value), num(cephPerDay.value), num(cephDays.value));
+
+    const cost =
+      num(maintenance.value) +
+      num(consumables.value) +
+      num(electricity.value);
+
+    const net = income - cost;
+    const payback = net > 0 ? Math.ceil(num(equipmentPrice.value) / net) : 0;
+    const netProfit = net * (WARRANTY - payback);
+
+    document.getElementById("net").innerText = "¥" + net.toLocaleString();
+    document.getElementById("payback").innerText = payback ? payback + " ヶ月" : "-";
+    document.getElementById("netProfit").innerText = "¥" + netProfit.toLocaleString();
+  }
+
+  ids.forEach(i => i.addEventListener("keyup", update));
+  update();
+</script>
+
 </body>
 </html>
+
 
