@@ -1,373 +1,242 @@
-import React, { useMemo, useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vatech CT ROI シミュレーター</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 40px;
+      color: #1f2937;
+    }
 
-/**
- * Design goal
- * - 모든 수치를 "완전 수정 가능"
- * - 각 항목이 무엇을 의미하는지 즉시 이해 가능
- * - 병원장/세일즈 설명용 ROI 시뮬레이터
- */
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 32px;
+    }
 
-const currency = (v) => `¥${Math.round(v).toLocaleString()}`;
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
 
-export default function DentalCTROICalculator() {
-  /* ---------------- Equipment ---------------- */
-  const [equipmentPrice, setEquipmentPrice] = useState(7_680_000);
-  const WARRANTY_MONTHS = 120;
+    .header img { height: 40px; }
 
-  /* ---------------- Income ---------------- */
-  const [income, setIncome] = useState({
-    pano: { fee: 1500, perDay: 3, days: 22 },
-    ctIns: { fee: 3500, perDay: 2, days: 22 },
-    ctSelf: { fee: 15000, perDay: 1, days: 22 },
-    ceph: { fee: 2000, perDay: 1, days: 22 },
-    other: 0,
-  });
+    h1 { font-size: 28px; margin: 0; }
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+      border-left: 6px solid #2563eb;
+      padding-left: 12px;
+    }
 
-  /* ---------------- Cost ---------------- */
-  const [cost, setCost] = useState({
-    maintenance: 30000,
-    consumables: 20000,
-    electricity: 15000,
-    rent: 200000,
-    rentRatio: 30,
-    doctor: 800000,
-    doctorRatio: 10,
-    staff: 300000,
-    staffRatio: 20,
-    other: 0,
-  });
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
 
-  /* ---------------- Calculations ---------------- */
-  const monthlyIncome = useMemo(() => {
-    const calc = (i) => i.fee * i.perDay * i.days;
-    const pano = calc(income.pano);
-    const ctIns = calc(income.ctIns);
-    const ctSelf = calc(income.ctSelf);
-    const ceph = calc(income.ceph);
-    const total = pano + ctIns + ctSelf + ceph + income.other;
-    return { pano, ctIns, ctSelf, ceph, total };
-  }, [income]);
+    .card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+    }
 
-  const monthlyCost = useMemo(() => {
-    const rent = cost.rent * (cost.rentRatio / 100);
-    const doctor = cost.doctor * (cost.doctorRatio / 100);
-    const staff = cost.staff * (cost.staffRatio / 100);
-    const total =
-      cost.maintenance +
-      cost.consumables +
-      cost.electricity +
-      rent +
-      doctor +
-      staff +
-      cost.other;
-    return { rent, doctor, staff, total };
-  }, [cost]);
+    label { font-size: 14px; font-weight: 600; }
+    small { font-size: 12px; color: #6b7280; display: block; margin: 4px 0 8px; }
 
-  const net = monthlyIncome.total - monthlyCost.total;
-  const payback = net > 0 ? Math.ceil(equipmentPrice / net) : 0;
-  const netMonths = WARRANTY_MONTHS - payback;
-  const netProfit = net * netMonths;
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
 
-  const chartData = [
-    { name: "収入", value: monthlyIncome.total },
-    { name: "費用", value: monthlyCost.total },
-    { name: "純利益", value: net },
-  ];
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
 
-  /* ---------------- UI ---------------- */
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Vatech CT ROI シミュレーター
-          </h1>
-          <p className="text-gray-500 mt-1">
-            各項目を自由に調整し、投資回収期間と利益構造を可視化
-          </p>
-        </div>
+    .kpi-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <KPI title="月間純利益" value={currency(net)} accent />
-          <KPI title="投資回収期間" value={`${payback} ヶ月`} />
-          <KPI title="ワランティ内純利益" value={currency(netProfit)} />
-        </div>
+    .kpi-card strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+      color: #dc2626;
+    }
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <Section title="月間収入">
-            <IncomeEditor
-              label="PANO（パノラマ撮影）"
-              description="パノラマX線撮影による保険収入"
-              data={income.pano}
-              onChange={(v) => setIncome({ ...income, pano: v })}
-            />
-            <IncomeEditor
-              label="CT（保険）"
-              description="保険適用CT撮影による収入"
-              data={income.ctIns}
-              onChange={(v) => setIncome({ ...income, ctIns: v })}
-            />
-            <IncomeEditor
-              label="CT（自費）"
-              description="インプラント・精密診断等の自費CT撮影"
-              data={income.ctSelf}
-              onChange={(v) => setIncome({ ...income, ctSelf: v })}
-            />
-            <IncomeEditor
-              label="CEPH"
-              description="矯正用セファロ撮影による収入"
-              data={income.ceph}
-              onChange={(v) => setIncome({ ...income, ceph: v })}
-            />
-            <LabeledInput
-              label="その他収入"
-              description="紹介料・臨時撮影など"
-              value={income.other}
-              onChange={(v) => setIncome({ ...income, other: v })}
-            />
-            <Separator />
-            <TotalRow label="収入合計" value={monthlyIncome.total} />
-          </Section>
+    .total {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      margin-top: 12px;
+    }
 
-          <Section title="月間費用">
-            <LabeledInput
-              label="保守メンテナンス"
-              value={cost.maintenance}
-              onChange={(v) => setCost({ ...cost, maintenance: v })}
-            />
-            <LabeledInput
-              label="消耗品"
-              description="（バイトビニル、手袋、アルコール）"
-              value={cost.consumables}
-              onChange={(v) => setCost({ ...cost, consumables: v })}
-            />
-            <LabeledInput
-              label="電気代"
-              description="CT稼働分のみ想定"
-              value={cost.electricity}
-              onChange={(v) => setCost({ ...cost, electricity: v })}
-            />
-            <OccupancyBlock
-              title="家賃配分"
-              description="院内設置面積分のみ按分"
-              base={cost.rent}
-              ratio={cost.rentRatio}
-              onBaseChange={(v) => setCost({ ...cost, rent: v })}
-              onRatioChange={(v) =>
-                setCost({ ...cost, rentRatio: v })
-              }
-              result={monthlyCost.rent}
-            />
-            <OccupancyBlock
-              title="医師人件費配分"
-              description="CT診断・説明にかかる稼働分"
-              base={cost.doctor}
-              ratio={cost.doctorRatio}
-              onBaseChange={(v) => setCost({ ...cost, doctor: v })}
-              onRatioChange={(v) =>
-                setCost({ ...cost, doctorRatio: v })
-              }
-              result={monthlyCost.doctor}
-            />
-            <OccupancyBlock
-              title="スタッフ人件費配分"
-              description="撮影・運用対応分"
-              base={cost.staff}
-              ratio={cost.staffRatio}
-              onBaseChange={(v) => setCost({ ...cost, staff: v })}
-              onRatioChange={(v) =>
-                setCost({ ...cost, staffRatio: v })
-              }
-              result={monthlyCost.staff}
-            />
-            <LabeledInput
-              label="その他費用"
-              description="通信費・雑費など"
-              value={cost.other}
-              onChange={(v) => setCost({ ...cost, other: v })}
-            />
-            <Separator />
-            <TotalRow label="費用合計" value={monthlyCost.total} />
-          </Section>
+    .chart {
+      margin-top: 24px;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
 
-          <Section title="投資・収支バランス">
-            <div className="space-y-2">
-              <p className="font-medium text-sm">CT装置価格</p>
-              <p className="text-xs text-gray-500">
-                初期導入費用（本体・基本構成）
-              </p>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={equipmentPrice}
-                onChange={(e) =>
-                  setEquipmentPrice(Number(e.target.value))
-                }
-              />
-            </div>
+<div class="container">
 
-            <Separator />
-
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis tickFormatter={(v) => `${v / 10000}万`} />
-                <Tooltip formatter={(v) => currency(v)} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {chartData.map((_, i) => (
-                    <Cell
-                      key={i}
-                      fill={i === 2 ? "#dc2626" : "#9ca3af"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Section>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------- Components ---------------- */
-
-function KPI({ title, value, accent }) {
-  return (
-    <Card className={accent ? "border-red-600" : ""}>
-      <CardContent className="p-4">
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className={`text-2xl font-bold ${accent ? "text-red-600" : ""}`}>
-          {value}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <Card>
-      <CardContent className="p-5 space-y-3">
-        <h2 className="font-semibold text-lg">{title}</h2>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-function LabeledInput({ label, description, value, onChange }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium">{label}</p>
-      {description && (
-        <p className="text-xs text-gray-500">{description}</p>
-      )}
-      <Input
-        type="text"
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-    </div>
-  );
-}
-
-function IncomeEditor({ label, description, data, onChange }) {
-  return (
-    <div className="rounded-lg bg-gray-50 p-4 space-y-3">
-      <div>
-        <p className="font-medium text-sm">{label}</p>
-        <p className="text-xs text-gray-500">{description}</p>
-        <p className="text-xs text-gray-400 mt-1">
-          単価 × 1日撮影回数 × 月間稼働日数
-        </p>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <Input
-          type="text"
-          inputMode="numeric"
-          value={data.fee}
-          onChange={(e) =>
-            onChange({ ...data, fee: Number(e.target.value) })
-          }
-        />
-        <Input
-          type="text"
-          inputMode="numeric"
-          value={data.perDay}
-          onChange={(e) =>
-            onChange({ ...data, perDay: Number(e.target.value) })
-          }
-        />
-        <Input
-          type="text"
-          inputMode="numeric"
-          value={data.days}
-          onChange={(e) =>
-            onChange({ ...data, days: Number(e.target.value) })
-          }
-        />
-      </div>
-    </div>
-  );
-}
-
-function OccupancyBlock({
-  title,
-  description,
-  base,
-  ratio,
-  onBaseChange,
-  onRatioChange,
-  result,
-}) {
-  return (
-    <div className="rounded-lg bg-gray-50 p-3 space-y-2">
-      <p className="font-medium text-sm">{title}</p>
-      <p className="text-xs text-gray-500">{description}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <Input
-          type="text"
-          inputMode="numeric"
-          value={base}
-          onChange={(e) => onBaseChange(Number(e.target.value))}
-        />
-        <Input
-          type="text"
-          inputMode="numeric"
-          value={ratio}
-          onChange={(e) => onRatioChange(Number(e.target.value))}
-        />
-      </div>
-      <p className="text-xs text-gray-500">
-        配分後: {currency(result)}
+  <!-- Header -->
+  <div class="header">
+    <img src="vatech-logo.png" alt="Vatech">
+    <div>
+      <h1>Vatech CT ROI シミュレーター</h1>
+      <p style="color:#6b7280;font-size:14px;">
+        各項目を自由に調整し、投資回収期間と利益構造を可視化
       </p>
     </div>
-  );
-}
+  </div>
 
-function TotalRow({ label, value }) {
-  return (
-    <div className="flex justify-between font-semibold pt-2">
-      <span>{label}</span>
-      <span className="text-red-600">{currency(value)}</span>
+  <!-- KPI -->
+  <div class="kpi">
+    <div class="kpi-card">
+      月間純利益
+      <strong id="net">-</strong>
     </div>
-  );
-}
+    <div class="kpi-card">
+      投資回収期間
+      <strong id="payback">-</strong>
+    </div>
+    <div class="kpi-card">
+      ワランティ内純利益
+      <strong id="netProfit">-</strong>
+    </div>
+  </div>
 
+  <!-- Equipment -->
+  <h2>CT装置価格</h2>
+  <div class="grid">
+    <div class="card">
+      <label>CT本体価格（円）</label>
+      <small>初期導入費用</small>
+      <input id="equipmentPrice" type="number" value="7680000">
+    </div>
+  </div>
 
+  <!-- Income -->
+  <h2>月間収入</h2>
+  <div class="grid">
+    <div class="card">
+      <label>PANO（パノラマ）</label>
+      <small>単価 × 回/日 × 日/月</small>
+      <input id="panoFee" type="number" value="1500">
+      <input id="panoPerDay" type="number" value="3">
+      <input id="panoDays" type="number" value="22">
+    </div>
+
+    <div class="card">
+      <label>CT（保険）</label>
+      <small>保険CT撮影</small>
+      <input id="ctIFee" type="number" value="3500">
+      <input id="ctIPerDay" type="number" value="2">
+      <input id="ctIDays" type="number" value="22">
+    </div>
+
+    <div class="card">
+      <label>CT（自費）</label>
+      <small>インプラント・精密診断</small>
+      <input id="ctSFee" type="number" value="15000">
+      <input id="ctSPerDay" type="number" value="1">
+      <input id="ctSDays" type="number" value="22">
+    </div>
+
+    <div class="card">
+      <label>CEPH</label>
+      <small>矯正用撮影</small>
+      <input id="cephFee" type="number" value="2000">
+      <input id="cephPerDay" type="number" value="1">
+      <input id="cephDays" type="number" value="22">
+    </div>
+  </div>
+
+  <!-- Cost -->
+  <h2>月間費用</h2>
+  <div class="grid">
+    <div class="card">
+      <label>メンテナンス</label>
+      <input id="maintenance" type="number" value="30000">
+    </div>
+    <div class="card">
+      <label>消耗品</label>
+      <small>バイトビニル・手袋・アルコール</small>
+      <input id="consumables" type="number" value="20000">
+    </div>
+    <div class="card">
+      <label>電気代</label>
+      <input id="electricity" type="number" value="15000">
+    </div>
+  </div>
+
+  <div class="chart">
+    ※ 그래프(Recharts)는 HTML 단독 버전에서는 생략  
+    <br>→ 랜딩페이지/영업용으로는 수치 중심이 더 명확
+  </div>
+
+</div>
+
+<script>
+  const WARRANTY = 120;
+  const ids = document.querySelectorAll("input");
+
+  function calcIncome(fee, per, days) {
+    return fee * per * days;
+  }
+
+  function update() {
+    const income =
+      calcIncome(+panoFee.value, +panoPerDay.value, +panoDays.value) +
+      calcIncome(+ctIFee.value, +ctIPerDay.value, +ctIDays.value) +
+      calcIncome(+ctSFee.value, +ctSPerDay.value, +ctSDays.value) +
+      calcIncome(+cephFee.value, +cephPerDay.value, +cephDays.value);
+
+    const cost =
+      +maintenance.value +
+      +consumables.value +
+      +electricity.value;
+
+    const net = income - cost;
+    const payback = net > 0 ? Math.ceil(+equipmentPrice.value / net) : "-";
+    const netProfit = net * (WARRANTY - payback);
+
+    document.getElementById("net").innerText = "¥" + net.toLocaleString();
+    document.getElementById("payback").innerText = payback + " ヶ月";
+    document.getElementById("netProfit").innerText = "¥" + netProfit.toLocaleString();
+  }
+
+  ids.forEach(i => i.addEventListener("input", update));
+  update();
+</script>
+
+</body>
+</html>
