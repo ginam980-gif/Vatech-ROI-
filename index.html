@@ -5,165 +5,177 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vatech CT ROI シミュレーター</title>
 
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+<body class="min-h-screen bg-gray-50 p-6">
 
-<body>
-<div id="root"></div>
+<div class="max-w-7xl mx-auto space-y-6">
 
-<script type="text/babel">
+<div>
+<h1 class="text-3xl font-bold tracking-tight">
+Vatech CT ROI シミュレーター
+</h1>
+<p class="text-gray-500 mt-1">
+各項目を自由に調整し、投資回収期間と利益構造を可視化
+</p>
+</div>
 
-const { useState, useMemo } = React;
-const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } = Recharts;
+<!-- KPI -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-white rounded-lg shadow-sm p-4 border-2 border-red-600">
+<p class="text-sm text-gray-500">月間純利益</p>
+<p id="net" class="text-2xl font-bold text-red-600">¥0</p>
+</div>
 
-const currency = (v) => `¥${Math.round(v).toLocaleString()}`;
+<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+<p class="text-sm text-gray-500">投資回収期間</p>
+<p id="payback" class="text-2xl font-bold">0 ヶ月</p>
+</div>
 
-/* 🔥 Safari 안정 숫자 처리 함수 */
-const handleNumeric = (value, setter) => {
-    const cleaned = value.replace(/[^0-9]/g, "");
-    setter(Number(cleaned) || 0);
-};
+<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+<p class="text-sm text-gray-500">ワランティ内純利益</p>
+<p id="netProfit" class="text-2xl font-bold">¥0</p>
+</div>
+</div>
 
-function Input({ value, setValue, placeholder }) {
-    return (
-        <input
-            type="text"
-            inputMode="numeric"
-            value={value}
-            placeholder={placeholder}
-            onChange={(e) => handleNumeric(e.target.value, setValue)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-        />
-    );
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+<!-- 収入 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-3">
+<h2 class="font-semibold text-lg">月間収入</h2>
+
+<div class="grid grid-cols-3 gap-2 text-sm">
+<input id="panoFee" type="text" inputmode="numeric" value="1500" class="border p-2 rounded">
+<input id="panoPer" type="text" inputmode="numeric" value="3" class="border p-2 rounded">
+<input id="panoDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
+</div>
+
+<div class="grid grid-cols-3 gap-2 text-sm">
+<input id="ctIFee" type="text" inputmode="numeric" value="3500" class="border p-2 rounded">
+<input id="ctIPer" type="text" inputmode="numeric" value="2" class="border p-2 rounded">
+<input id="ctIDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
+</div>
+
+<div class="grid grid-cols-3 gap-2 text-sm">
+<input id="ctSFee" type="text" inputmode="numeric" value="15000" class="border p-2 rounded">
+<input id="ctSPer" type="text" inputmode="numeric" value="1" class="border p-2 rounded">
+<input id="ctSDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
+</div>
+
+<div class="grid grid-cols-3 gap-2 text-sm">
+<input id="cephFee" type="text" inputmode="numeric" value="2000" class="border p-2 rounded">
+<input id="cephPer" type="text" inputmode="numeric" value="1" class="border p-2 rounded">
+<input id="cephDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
+</div>
+
+<input id="incomeOther" type="text" inputmode="numeric" value="0"
+class="border p-2 rounded w-full">
+
+</div>
+
+<!-- 費用 -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-3">
+<h2 class="font-semibold text-lg">月間費用</h2>
+
+<input id="maintenance" type="text" inputmode="numeric" value="30000" class="border p-2 rounded w-full">
+<input id="consumables" type="text" inputmode="numeric" value="20000" class="border p-2 rounded w-full">
+<input id="electricity" type="text" inputmode="numeric" value="15000" class="border p-2 rounded w-full">
+
+<input id="rent" type="text" inputmode="numeric" value="200000" class="border p-2 rounded w-full">
+<input id="rentRatio" type="text" inputmode="numeric" value="30" class="border p-2 rounded w-full">
+
+<input id="doctor" type="text" inputmode="numeric" value="800000" class="border p-2 rounded w-full">
+<input id="doctorRatio" type="text" inputmode="numeric" value="10" class="border p-2 rounded w-full">
+
+<input id="staff" type="text" inputmode="numeric" value="300000" class="border p-2 rounded w-full">
+<input id="staffRatio" type="text" inputmode="numeric" value="20" class="border p-2 rounded w-full">
+
+<input id="costOther" type="text" inputmode="numeric" value="0"
+class="border p-2 rounded w-full">
+
+</div>
+
+<!-- 投資 + グラフ -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
+<h2 class="font-semibold text-lg">投資</h2>
+
+<input id="equipmentPrice" type="text" inputmode="numeric" value="7680000"
+class="border p-2 rounded w-full">
+
+<canvas id="chart" height="240"></canvas>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const WARRANTY=120;
+
+function val(id){
+return Number(document.getElementById(id).value.replace(/[^0-9]/g,""))||0;
 }
 
-function DentalCTROICalculator() {
+function calc(){
 
-const WARRANTY_MONTHS = 120;
+const pano=val("panoFee")*val("panoPer")*val("panoDays");
+const ctI=val("ctIFee")*val("ctIPer")*val("ctIDays");
+const ctS=val("ctSFee")*val("ctSPer")*val("ctSDays");
+const ceph=val("cephFee")*val("cephPer")*val("cephDays");
+const income=pano+ctI+ctS+ceph+val("incomeOther");
 
-const [equipmentPrice, setEquipmentPrice] = useState(7680000);
+const rent=val("rent")*(val("rentRatio")/100);
+const doctor=val("doctor")*(val("doctorRatio")/100);
+const staff=val("staff")*(val("staffRatio")/100);
 
-const [income, setIncome] = useState({
-    pano: { fee:1500, perDay:3, days:22 },
-    ctIns: { fee:3500, perDay:2, days:22 },
-    ctSelf:{ fee:15000, perDay:1, days:22 },
-    ceph:{ fee:2000, perDay:1, days:22 },
-    other:0
-});
+const cost=
+val("maintenance")+
+val("consumables")+
+val("electricity")+
+rent+doctor+staff+
+val("costOther");
 
-const [cost, setCost] = useState({
-    maintenance:30000,
-    consumables:20000,
-    electricity:15000,
-    rent:200000,
-    rentRatio:30,
-    doctor:800000,
-    doctorRatio:10,
-    staff:300000,
-    staffRatio:20,
-    other:0
-});
+const net=income-cost;
+const payback=net>0?Math.ceil(val("equipmentPrice")/net):0;
+const netProfit=net*(WARRANTY-payback);
 
-const monthlyIncome = useMemo(()=>{
-    const calc = i=>i.fee*i.perDay*i.days;
-    const pano=calc(income.pano);
-    const ctIns=calc(income.ctIns);
-    const ctSelf=calc(income.ctSelf);
-    const ceph=calc(income.ceph);
-    const total=pano+ctIns+ctSelf+ceph+income.other;
-    return {total};
-},[income]);
+document.getElementById("net").innerText="¥"+net.toLocaleString();
+document.getElementById("payback").innerText=payback+" ヶ月";
+document.getElementById("netProfit").innerText="¥"+netProfit.toLocaleString();
 
-const monthlyCost = useMemo(()=>{
-    const rent=cost.rent*(cost.rentRatio/100);
-    const doctor=cost.doctor*(cost.doctorRatio/100);
-    const staff=cost.staff*(cost.staffRatio/100);
-    const total=
-        cost.maintenance+
-        cost.consumables+
-        cost.electricity+
-        rent+doctor+staff+
-        cost.other;
-    return {total};
-},[cost]);
-
-const net=monthlyIncome.total-monthlyCost.total;
-const payback=net>0?Math.ceil(equipmentPrice/net):0;
-const netProfit=net*(WARRANTY_MONTHS-payback);
-
-const chartData=[
-    {name:"収入",value:monthlyIncome.total},
-    {name:"費用",value:monthlyCost.total},
-    {name:"純利益",value:net}
-];
-
-return (
-<div className="min-h-screen bg-gray-50 p-6">
-<div className="max-w-7xl mx-auto space-y-6">
-
-<h1 className="text-3xl font-bold">Vatech CT ROI シミュレーター</h1>
-
-<div className="grid md:grid-cols-3 gap-4">
-<div className="bg-white p-4 rounded shadow">
-<p className="text-sm text-gray-500">月間純利益</p>
-<p className="text-2xl font-bold text-red-600">{currency(net)}</p>
-</div>
-<div className="bg-white p-4 rounded shadow">
-<p className="text-sm text-gray-500">投資回収期間</p>
-<p className="text-2xl font-bold">{payback} ヶ月</p>
-</div>
-<div className="bg-white p-4 rounded shadow">
-<p className="text-sm text-gray-500">ワランティ内純利益</p>
-<p className="text-2xl font-bold">{currency(netProfit)}</p>
-</div>
-</div>
-
-<div className="grid xl:grid-cols-3 gap-6">
-
-<div className="bg-white p-5 rounded shadow space-y-3">
-<h2 className="font-semibold">CT装置価格</h2>
-<Input value={equipmentPrice} setValue={setEquipmentPrice}/>
-</div>
-
-<div className="bg-white p-5 rounded shadow space-y-3">
-<h2 className="font-semibold">月間費用</h2>
-<Input value={cost.maintenance} setValue={(v)=>setCost({...cost,maintenance:v})}/>
-<Input value={cost.consumables} setValue={(v)=>setCost({...cost,consumables:v})}/>
-<Input value={cost.electricity} setValue={(v)=>setCost({...cost,electricity:v})}/>
-</div>
-
-<div className="bg-white p-5 rounded shadow">
-<ResponsiveContainer width="100%" height={240}>
-<BarChart data={chartData}>
-<CartesianGrid strokeDasharray="3 3"/>
-<XAxis dataKey="name"/>
-<YAxis/>
-<Tooltip formatter={(v)=>currency(v)}/>
-<Bar dataKey="value">
-{chartData.map((e,i)=>
-<Cell key={i} fill={i===2?"#dc2626":"#9ca3af"}/>
-)}
-</Bar>
-</BarChart>
-</ResponsiveContainer>
-</div>
-
-</div>
-</div>
-</div>
-);
+chart.data.datasets[0].data=[income,cost,net];
+chart.update();
 }
 
-const root=ReactDOM.createRoot(document.getElementById("root"));
-root.render(<DentalCTROICalculator/>);
+document.querySelectorAll("input").forEach(i=>{
+i.addEventListener("input",calc);
+});
+
+const chart=new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:["収入","費用","純利益"],
+datasets:[{
+data:[0,0,0],
+backgroundColor:["#9ca3af","#9ca3af","#dc2626"]
+}]
+},
+options:{
+responsive:true,
+plugins:{legend:{display:false}}
+}
+});
+
+calc();
 
 </script>
+
 </body>
 </html>
+
+
 
 
 
