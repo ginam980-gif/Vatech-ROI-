@@ -1,175 +1,208 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vatech CT ROI シミュレーター</title>
+  <meta charset="UTF-8" />
+  <title>Vatech CT ROI シミュレーター</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 40px;
+      color: #1f2937;
+    }
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 32px;
+    }
 
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+      border-left: 6px solid #2563eb;
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    small {
+      display: block;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+    }
+
+    .result {
+      margin-top: 40px;
+      padding: 24px;
+      background: #eff6ff;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .result h3 {
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .result p {
+      font-size: 16px;
+      margin: 6px 0;
+    }
+
+    .highlight {
+      font-size: 20px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-gray-50 p-6">
+<body>
 
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="container">
+  <h1>Vatech CT ROI シミュレーター</h1>
 
-<div>
-<h1 class="text-3xl font-bold tracking-tight">
-Vatech CT ROI シミュレーター
-</h1>
-<p class="text-gray-500 mt-1">
-各項目を自由に調整し、投資回収期間と利益構造を可視化
-</p>
-</div>
+  <h2>初期投資</h2>
+  <div class="grid">
+    <div class="card">
+      <label>CT本体価格（円）</label>
+      <input type="number" id="ctPrice" value="15000000">
+    </div>
+  </div>
 
-<!-- KPI -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<div class="bg-white rounded-lg shadow-sm p-4 border-2 border-red-600">
-<p class="text-sm text-gray-500">月間純利益</p>
-<p id="net" class="text-2xl font-bold text-red-600">¥0</p>
-</div>
+  <h2>PANO（パノラマ撮影）</h2>
+  <div class="grid">
+    <div class="card">
+      <label>月間撮影数</label>
+      <small>1か月あたりのパノラマ撮影件数</small>
+      <input type="number" id="panoCount" value="200">
+    </div>
+    <div class="card">
+      <label>単価（円）</label>
+      <small>保険・自費平均</small>
+      <input type="number" id="panoPrice" value="3000">
+    </div>
+    <div class="card">
+      <label>月間稼働率（%）</label>
+      <small>実際に撮影できる稼働割合</small>
+      <input type="number" id="panoRate" value="100">
+    </div>
+  </div>
 
-<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-<p class="text-sm text-gray-500">投資回収期間</p>
-<p id="payback" class="text-2xl font-bold">0 ヶ月</p>
-</div>
+  <h2>CT（3D撮影）</h2>
+  <div class="grid">
+    <div class="card">
+      <label>月間撮影数</label>
+      <small>1か月あたりのCT撮影件数</small>
+      <input type="number" id="ctCount" value="60">
+    </div>
+    <div class="card">
+      <label>単価（円）</label>
+      <small>自費・保険混合平均</small>
+      <input type="number" id="ctUnitPrice" value="15000">
+    </div>
+    <div class="card">
+      <label>月間稼働率（%）</label>
+      <small>CT使用率</small>
+      <input type="number" id="ctRate" value="100">
+    </div>
+  </div>
 
-<div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-<p class="text-sm text-gray-500">ワランティ内純利益</p>
-<p id="netProfit" class="text-2xl font-bold">¥0</p>
-</div>
-</div>
+  <h2>ランニングコスト（月額）</h2>
+  <div class="grid">
+    <div class="card">
+      <label>消耗品費（円）</label>
+      <small>バイトビニル / 手袋 / アルコール</small>
+      <input type="number" id="consumable" value="30000">
+    </div>
+    <div class="card">
+      <label>メインテナンス費（円）</label>
+      <input type="number" id="maintenance" value="50000">
+    </div>
+  </div>
 
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-<!-- 収入 -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-3">
-<h2 class="font-semibold text-lg">月間収入</h2>
-
-<div class="grid grid-cols-3 gap-2 text-sm">
-<input id="panoFee" type="text" inputmode="numeric" value="1500" class="border p-2 rounded">
-<input id="panoPer" type="text" inputmode="numeric" value="3" class="border p-2 rounded">
-<input id="panoDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
-</div>
-
-<div class="grid grid-cols-3 gap-2 text-sm">
-<input id="ctIFee" type="text" inputmode="numeric" value="3500" class="border p-2 rounded">
-<input id="ctIPer" type="text" inputmode="numeric" value="2" class="border p-2 rounded">
-<input id="ctIDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
-</div>
-
-<div class="grid grid-cols-3 gap-2 text-sm">
-<input id="ctSFee" type="text" inputmode="numeric" value="15000" class="border p-2 rounded">
-<input id="ctSPer" type="text" inputmode="numeric" value="1" class="border p-2 rounded">
-<input id="ctSDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
-</div>
-
-<div class="grid grid-cols-3 gap-2 text-sm">
-<input id="cephFee" type="text" inputmode="numeric" value="2000" class="border p-2 rounded">
-<input id="cephPer" type="text" inputmode="numeric" value="1" class="border p-2 rounded">
-<input id="cephDays" type="text" inputmode="numeric" value="22" class="border p-2 rounded">
-</div>
-
-<input id="incomeOther" type="text" inputmode="numeric" value="0"
-class="border p-2 rounded w-full">
-
-</div>
-
-<!-- 費用 -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-3">
-<h2 class="font-semibold text-lg">月間費用</h2>
-
-<input id="maintenance" type="text" inputmode="numeric" value="30000" class="border p-2 rounded w-full">
-<input id="consumables" type="text" inputmode="numeric" value="20000" class="border p-2 rounded w-full">
-<input id="electricity" type="text" inputmode="numeric" value="15000" class="border p-2 rounded w-full">
-
-<input id="rent" type="text" inputmode="numeric" value="200000" class="border p-2 rounded w-full">
-<input id="rentRatio" type="text" inputmode="numeric" value="30" class="border p-2 rounded w-full">
-
-<input id="doctor" type="text" inputmode="numeric" value="800000" class="border p-2 rounded w-full">
-<input id="doctorRatio" type="text" inputmode="numeric" value="10" class="border p-2 rounded w-full">
-
-<input id="staff" type="text" inputmode="numeric" value="300000" class="border p-2 rounded w-full">
-<input id="staffRatio" type="text" inputmode="numeric" value="20" class="border p-2 rounded w-full">
-
-<input id="costOther" type="text" inputmode="numeric" value="0"
-class="border p-2 rounded w-full">
-
-</div>
-
-<!-- 投資 + グラフ -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 space-y-4">
-<h2 class="font-semibold text-lg">投資</h2>
-
-<input id="equipmentPrice" type="text" inputmode="numeric" value="7680000"
-class="border p-2 rounded w-full">
-
-<canvas id="chart" height="240"></canvas>
-</div>
-
-</div>
+  <div class="result">
+    <h3>シミュレーション結果</h3>
+    <p>月間売上：<span class="highlight" id="monthlySales">-</span> 円</p>
+    <p>月間利益：<span class="highlight" id="monthlyProfit">-</span> 円</p>
+    <p>投資回収期間：<span class="highlight" id="roiMonths">-</span> ヶ月</p>
+  </div>
 </div>
 
 <script>
+  const inputs = document.querySelectorAll("input");
 
-const WARRANTY=120;
+  function calculate() {
+    const ctPrice = +ctPriceInput.value;
 
-function val(id){
-return Number(document.getElementById(id).value.replace(/[^0-9]/g,""))||0;
-}
+    const panoSales =
+      panoCount.value * panoPrice.value * (panoRate.value / 100);
 
-function calc(){
+    const ctSales =
+      ctCount.value * ctUnitPrice.value * (ctRate.value / 100);
 
-const pano=val("panoFee")*val("panoPer")*val("panoDays");
-const ctI=val("ctIFee")*val("ctIPer")*val("ctIDays");
-const ctS=val("ctSFee")*val("ctSPer")*val("ctSDays");
-const ceph=val("cephFee")*val("cephPer")*val("cephDays");
-const income=pano+ctI+ctS+ceph+val("incomeOther");
+    const monthlySales = panoSales + ctSales;
+    const monthlyCost = +consumable.value + +maintenance.value;
+    const monthlyProfit = monthlySales - monthlyCost;
 
-const rent=val("rent")*(val("rentRatio")/100);
-const doctor=val("doctor")*(val("doctorRatio")/100);
-const staff=val("staff")*(val("staffRatio")/100);
+    const roiMonths =
+      monthlyProfit > 0 ? Math.ceil(ctPrice / monthlyProfit) : "-";
 
-const cost=
-val("maintenance")+
-val("consumables")+
-val("electricity")+
-rent+doctor+staff+
-val("costOther");
+    document.getElementById("monthlySales").textContent =
+      monthlySales.toLocaleString();
+    document.getElementById("monthlyProfit").textContent =
+      monthlyProfit.toLocaleString();
+    document.getElementById("roiMonths").textContent = roiMonths;
+  }
 
-const net=income-cost;
-const payback=net>0?Math.ceil(val("equipmentPrice")/net):0;
-const netProfit=net*(WARRANTY-payback);
+  const ctPriceInput = document.getElementById("ctPrice");
+  const panoCount = document.getElementById("panoCount");
+  const panoPrice = document.getElementById("panoPrice");
+  const panoRate = document.getElementById("panoRate");
+  const ctCount = document.getElementById("ctCount");
+  const ctUnitPrice = document.getElementById("ctUnitPrice");
+  const ctRate = document.getElementById("ctRate");
+  const consumable = document.getElementById("consumable");
+  const maintenance = document.getElementById("maintenance");
 
-document.getElementById("net").innerText="¥"+net.toLocaleString();
-document.getElementById("payback").innerText=payback+" ヶ月";
-document.getElementById("netProfit").innerText="¥"+netProfit.toLocaleString();
-
-chart.data.datasets[0].data=[income,cost,net];
-chart.update();
-}
-
-document.querySelectorAll("input").forEach(i=>{
-i.addEventListener("input",calc);
-});
-
-const chart=new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{
-labels:["収入","費用","純利益"],
-datasets:[{
-data:[0,0,0],
-backgroundColor:["#9ca3af","#9ca3af","#dc2626"]
-}]
-},
-options:{
-responsive:true,
-plugins:{legend:{display:false}}
-}
-});
-
-calc();
-
+  inputs.forEach(input => input.addEventListener("input", calculate));
+  calculate();
 </script>
 
 </body>
