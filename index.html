@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vatech CT ROI シミュレーター</title>
   <style>
     body {
@@ -13,20 +14,26 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: auto;
-      background: #ffffff;
+      background: #fff;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       padding: 32px;
     }
 
-    h1 {
-      text-align: center;
-      font-size: 28px;
-      margin-bottom: 32px;
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
     }
 
+    .header img { height: 40px; }
+
+    h1 { font-size: 28px; margin: 0; }
     h2 {
       font-size: 20px;
       margin-top: 32px;
@@ -47,18 +54,8 @@
       padding: 16px;
     }
 
-    label {
-      display: block;
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-
-    small {
-      display: block;
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 8px;
-    }
+    label { font-size: 14px; font-weight: 600; }
+    small { font-size: 12px; color: #6b7280; display: block; margin: 4px 0 8px; }
 
     input {
       width: 100%;
@@ -68,141 +65,170 @@
       font-size: 14px;
     }
 
-    .result {
-      margin-top: 40px;
-      padding: 24px;
-      background: #eff6ff;
-      border-radius: 16px;
-      text-align: center;
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
     }
 
-    .result h3 {
+    .kpi-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .kpi-card strong {
+      display: block;
       font-size: 22px;
-      margin-bottom: 16px;
+      margin-top: 6px;
+      color: #dc2626;
     }
 
-    .result p {
-      font-size: 16px;
-      margin: 6px 0;
-    }
-
-    .highlight {
-      font-size: 20px;
-      font-weight: bold;
-      color: #2563eb;
+    .chart {
+      margin-top: 24px;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Vatech CT ROI シミュレーター</h1>
 
-  <h2>初期投資</h2>
+  <div class="header">
+    <img src="vatech-logo.png" alt="Vatech">
+    <div>
+      <h1>Vatech CT ROI シミュレーター</h1>
+      <p style="color:#6b7280;font-size:14px;">
+        各項目を自由に調整し、投資回収期間と利益構造を可視化
+      </p>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-card">
+      月間純利益
+      <strong id="net">-</strong>
+    </div>
+    <div class="kpi-card">
+      投資回収期間
+      <strong id="payback">-</strong>
+    </div>
+    <div class="kpi-card">
+      ワランティ内純利益
+      <strong id="netProfit">-</strong>
+    </div>
+  </div>
+
+  <h2>CT装置価格</h2>
   <div class="grid">
     <div class="card">
       <label>CT本体価格（円）</label>
-      <input type="number" id="ctPrice" value="15000000">
+      <small>初期導入費用</small>
+      <input id="equipmentPrice" type="text" inputmode="numeric" value="7680000">
     </div>
   </div>
 
-  <h2>PANO（パノラマ撮影）</h2>
+  <h2>月間収入</h2>
   <div class="grid">
     <div class="card">
-      <label>月間撮影数</label>
-      <small>1か月あたりのパノラマ撮影件数</small>
-      <input type="number" id="panoCount" value="200">
+      <label>PANO（パノラマ）</label>
+      <small>単価 × 回/日 × 日/月</small>
+      <input id="panoFee" type="text" inputmode="numeric" value="1500">
+      <input id="panoPerDay" type="text" inputmode="numeric" value="3">
+      <input id="panoDays" type="text" inputmode="numeric" value="22">
     </div>
+
     <div class="card">
-      <label>単価（円）</label>
-      <small>保険・自費平均</small>
-      <input type="number" id="panoPrice" value="3000">
+      <label>CT（保険）</label>
+      <small>保険CT撮影</small>
+      <input id="ctIFee" type="text" inputmode="numeric" value="3500">
+      <input id="ctIPerDay" type="text" inputmode="numeric" value="2">
+      <input id="ctIDays" type="text" inputmode="numeric" value="22">
     </div>
+
     <div class="card">
-      <label>月間稼働率（%）</label>
-      <small>実際に撮影できる稼働割合</small>
-      <input type="number" id="panoRate" value="100">
+      <label>CT（自費）</label>
+      <small>インプラント・精密診断</small>
+      <input id="ctSFee" type="text" inputmode="numeric" value="15000">
+      <input id="ctSPerDay" type="text" inputmode="numeric" value="1">
+      <input id="ctSDays" type="text" inputmode="numeric" value="22">
+    </div>
+
+    <div class="card">
+      <label>CEPH</label>
+      <small>矯正用撮影</small>
+      <input id="cephFee" type="text" inputmode="numeric" value="2000">
+      <input id="cephPerDay" type="text" inputmode="numeric" value="1">
+      <input id="cephDays" type="text" inputmode="numeric" value="22">
     </div>
   </div>
 
-  <h2>CT（3D撮影）</h2>
+  <h2>月間費用</h2>
   <div class="grid">
     <div class="card">
-      <label>月間撮影数</label>
-      <small>1か月あたりのCT撮影件数</small>
-      <input type="number" id="ctCount" value="60">
+      <label>メンテナンス</label>
+      <input id="maintenance" type="text" inputmode="numeric" value="30000">
     </div>
     <div class="card">
-      <label>単価（円）</label>
-      <small>自費・保険混合平均</small>
-      <input type="number" id="ctUnitPrice" value="15000">
+      <label>消耗品</label>
+      <small>バイトビニル・手袋・アルコール</small>
+      <input id="consumables" type="text" inputmode="numeric" value="20000">
     </div>
     <div class="card">
-      <label>月間稼働率（%）</label>
-      <small>CT使用率</small>
-      <input type="number" id="ctRate" value="100">
+      <label>電気代</label>
+      <input id="electricity" type="text" inputmode="numeric" value="15000">
     </div>
   </div>
 
-  <h2>ランニングコスト（月額）</h2>
-  <div class="grid">
-    <div class="card">
-      <label>消耗品費（円）</label>
-      <small>バイトビニル / 手袋 / アルコール</small>
-      <input type="number" id="consumable" value="30000">
-    </div>
-    <div class="card">
-      <label>メインテナンス費（円）</label>
-      <input type="number" id="maintenance" value="50000">
-    </div>
+  <div class="chart">
+    ※ 그래프(Recharts)는 HTML 단독 버전에서는 생략  
+    <br>→ 랜딩페이지/영업용으로는 수치 중심이 더 명확
   </div>
 
-  <div class="result">
-    <h3>シミュレーション結果</h3>
-    <p>月間売上：<span class="highlight" id="monthlySales">-</span> 円</p>
-    <p>月間利益：<span class="highlight" id="monthlyProfit">-</span> 円</p>
-    <p>投資回収期間：<span class="highlight" id="roiMonths">-</span> ヶ月</p>
-  </div>
 </div>
 
 <script>
-  const inputs = document.querySelectorAll("input");
+  const WARRANTY = 120;
+  const ids = document.querySelectorAll("input");
 
-  function calculate() {
-    const ctPrice = +ctPriceInput.value;
-
-    const panoSales =
-      panoCount.value * panoPrice.value * (panoRate.value / 100);
-
-    const ctSales =
-      ctCount.value * ctUnitPrice.value * (ctRate.value / 100);
-
-    const monthlySales = panoSales + ctSales;
-    const monthlyCost = +consumable.value + +maintenance.value;
-    const monthlyProfit = monthlySales - monthlyCost;
-
-    const roiMonths =
-      monthlyProfit > 0 ? Math.ceil(ctPrice / monthlyProfit) : "-";
-
-    document.getElementById("monthlySales").textContent =
-      monthlySales.toLocaleString();
-    document.getElementById("monthlyProfit").textContent =
-      monthlyProfit.toLocaleString();
-    document.getElementById("roiMonths").textContent = roiMonths;
+  function num(v){
+    return parseInt(v.replace(/[^0-9]/g,"")) || 0;
   }
 
-  const ctPriceInput = document.getElementById("ctPrice");
-  const panoCount = document.getElementById("panoCount");
-  const panoPrice = document.getElementById("panoPrice");
-  const panoRate = document.getElementById("panoRate");
-  const ctCount = document.getElementById("ctCount");
-  const ctUnitPrice = document.getElementById("ctUnitPrice");
-  const ctRate = document.getElementById("ctRate");
-  const consumable = document.getElementById("consumable");
-  const maintenance = document.getElementById("maintenance");
+  function calcIncome(fee, per, days) {
+    return fee * per * days;
+  }
 
-  inputs.forEach(input => input.addEventListener("input", calculate));
-  calculate();
+  function update() {
+    const income =
+      calcIncome(num(panoFee.value), num(panoPerDay.value), num(panoDays.value)) +
+      calcIncome(num(ctIFee.value), num(ctIPerDay.value), num(ctIDays.value)) +
+      calcIncome(num(ctSFee.value), num(ctSPerDay.value), num(ctSDays.value)) +
+      calcIncome(num(cephFee.value), num(cephPerDay.value), num(cephDays.value));
+
+    const cost =
+      num(maintenance.value) +
+      num(consumables.value) +
+      num(electricity.value);
+
+    const net = income - cost;
+    const payback = net > 0 ? Math.ceil(num(equipmentPrice.value) / net) : 0;
+    const netProfit = net * (WARRANTY - payback);
+
+    document.getElementById("net").innerText = "¥" + net.toLocaleString();
+    document.getElementById("payback").innerText = payback ? payback + " ヶ月" : "-";
+    document.getElementById("netProfit").innerText = "¥" + netProfit.toLocaleString();
+  }
+
+  ids.forEach(i => i.addEventListener("keyup", update));
+  update();
 </script>
 
 </body>
