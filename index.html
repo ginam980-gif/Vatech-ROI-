@@ -1,364 +1,170 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vatech CT ROI シミュレーター</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vatech CT ROI シミュレーター</title>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } = Recharts;
+<script type="text/babel">
 
-        const currency = (v) => `¥${Math.round(v).toLocaleString()}`;
+const { useState, useMemo } = React;
+const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ResponsiveContainer } = Recharts;
 
-        function Separator() {
-            return <div className="border-t border-gray-200 my-3" />;
-        }
+const currency = (v) => `¥${Math.round(v).toLocaleString()}`;
 
-        function KPI({ title, value, accent }) {
-            return (
-                <div className={`bg-white rounded-lg shadow-sm p-4 border ${accent ? "border-red-600 border-2" : "border-gray-200"}`}>
-                    <p className="text-sm text-gray-500">{title}</p>
-                    <p className={`text-2xl font-bold ${accent ? "text-red-600" : ""}`}>
-                        {value}
-                    </p>
-                </div>
-            );
-        }
+/* 🔥 Safari 안정 숫자 처리 함수 */
+const handleNumeric = (value, setter) => {
+    const cleaned = value.replace(/[^0-9]/g, "");
+    setter(Number(cleaned) || 0);
+};
 
-        function Section({ title, children }) {
-            return (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div className="p-5 space-y-3">
-                        <h2 className="font-semibold text-lg">{title}</h2>
-                        {children}
-                    </div>
-                </div>
-            );
-        }
+function Input({ value, setValue, placeholder }) {
+    return (
+        <input
+            type="text"
+            inputMode="numeric"
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => handleNumeric(e.target.value, setValue)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+        />
+    );
+}
 
-        function LabeledInput({ label, description, value, onChange }) {
-            return (
-                <div className="space-y-1">
-                    <p className="text-sm font-medium">{label}</p>
-                    {description && <p className="text-xs text-gray-500">{description}</p>}
-                    <input 
-                        type="number" 
-                        value={value} 
-                        onChange={(e) => onChange(Number(e.target.value) || 0)} 
-                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    />
-                </div>
-            );
-        }
+function DentalCTROICalculator() {
 
-        function IncomeEditor({ label, description, data, onChange }) {
-            return (
-                <div className="rounded-lg bg-gray-50 p-4 space-y-3">
-                    <div>
-                        <p className="font-medium text-sm">{label}</p>
-                        <p className="text-xs text-gray-500">{description}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                            単価 × 1日撮影回数 × 月間稼働日数
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        <input 
-                            type="number" 
-                            value={data.fee} 
-                            onChange={(e) => onChange({ ...data, fee: Number(e.target.value) || 0 })} 
-                            onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="単価（円）"
-                            className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                        <input 
-                            type="number" 
-                            value={data.perDay} 
-                            onChange={(e) => onChange({ ...data, perDay: Number(e.target.value) || 0 })} 
-                            onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="回/日"
-                            className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                        <input 
-                            type="number" 
-                            value={data.days} 
-                            onChange={(e) => onChange({ ...data, days: Number(e.target.value) || 0 })} 
-                            onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="日/月"
-                            className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                    </div>
-                </div>
-            );
-        }
+const WARRANTY_MONTHS = 120;
 
-        function OccupancyBlock({ title, description, base, ratio, onBaseChange, onRatioChange, result }) {
-            return (
-                <div className="rounded-lg bg-gray-50 p-3 space-y-2">
-                    <p className="font-medium text-sm">{title}</p>
-                    <p className="text-xs text-gray-500">{description}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                        <input 
-                            type="number" 
-                            value={base} 
-                            onChange={(e) => onBaseChange(Number(e.target.value) || 0)} 
-                            onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="月額"
-                            className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                        <input 
-                            type="number" 
-                            value={ratio} 
-                            onChange={(e) => onRatioChange(Number(e.target.value) || 0)} 
-                            onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            placeholder="配分率 %"
-                            className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        />
-                    </div>
-                    <p className="text-xs text-gray-500">配分後: {currency(result)}</p>
-                </div>
-            );
-        }
+const [equipmentPrice, setEquipmentPrice] = useState(7680000);
 
-        function TotalRow({ label, value }) {
-            return (
-                <div className="flex justify-between font-semibold pt-2">
-                    <span>{label}</span>
-                    <span className="text-red-600">{currency(value)}</span>
-                </div>
-            );
-        }
+const [income, setIncome] = useState({
+    pano: { fee:1500, perDay:3, days:22 },
+    ctIns: { fee:3500, perDay:2, days:22 },
+    ctSelf:{ fee:15000, perDay:1, days:22 },
+    ceph:{ fee:2000, perDay:1, days:22 },
+    other:0
+});
 
-        function DentalCTROICalculator() {
-            const [equipmentPrice, setEquipmentPrice] = useState(7680000);
-            const WARRANTY_MONTHS = 120;
+const [cost, setCost] = useState({
+    maintenance:30000,
+    consumables:20000,
+    electricity:15000,
+    rent:200000,
+    rentRatio:30,
+    doctor:800000,
+    doctorRatio:10,
+    staff:300000,
+    staffRatio:20,
+    other:0
+});
 
-            const [income, setIncome] = useState({
-                pano: { fee: 1500, perDay: 3, days: 22 },
-                ctIns: { fee: 3500, perDay: 2, days: 22 },
-                ctSelf: { fee: 15000, perDay: 1, days: 22 },
-                ceph: { fee: 2000, perDay: 1, days: 22 },
-                other: 0,
-            });
+const monthlyIncome = useMemo(()=>{
+    const calc = i=>i.fee*i.perDay*i.days;
+    const pano=calc(income.pano);
+    const ctIns=calc(income.ctIns);
+    const ctSelf=calc(income.ctSelf);
+    const ceph=calc(income.ceph);
+    const total=pano+ctIns+ctSelf+ceph+income.other;
+    return {total};
+},[income]);
 
-            const [cost, setCost] = useState({
-                maintenance: 30000,
-                consumables: 20000,
-                electricity: 15000,
-                rent: 200000,
-                rentRatio: 30,
-                doctor: 800000,
-                doctorRatio: 10,
-                staff: 300000,
-                staffRatio: 20,
-                other: 0,
-            });
+const monthlyCost = useMemo(()=>{
+    const rent=cost.rent*(cost.rentRatio/100);
+    const doctor=cost.doctor*(cost.doctorRatio/100);
+    const staff=cost.staff*(cost.staffRatio/100);
+    const total=
+        cost.maintenance+
+        cost.consumables+
+        cost.electricity+
+        rent+doctor+staff+
+        cost.other;
+    return {total};
+},[cost]);
 
-            const monthlyIncome = useMemo(() => {
-                const calc = (i) => i.fee * i.perDay * i.days;
-                const pano = calc(income.pano);
-                const ctIns = calc(income.ctIns);
-                const ctSelf = calc(income.ctSelf);
-                const ceph = calc(income.ceph);
-                const total = pano + ctIns + ctSelf + ceph + income.other;
-                return { pano, ctIns, ctSelf, ceph, total };
-            }, [income]);
+const net=monthlyIncome.total-monthlyCost.total;
+const payback=net>0?Math.ceil(equipmentPrice/net):0;
+const netProfit=net*(WARRANTY_MONTHS-payback);
 
-            const monthlyCost = useMemo(() => {
-                const rent = cost.rent * (cost.rentRatio / 100);
-                const doctor = cost.doctor * (cost.doctorRatio / 100);
-                const staff = cost.staff * (cost.staffRatio / 100);
-                const total =
-                    cost.maintenance +
-                    cost.consumables +
-                    cost.electricity +
-                    rent +
-                    doctor +
-                    staff +
-                    cost.other;
-                return { rent, doctor, staff, total };
-            }, [cost]);
+const chartData=[
+    {name:"収入",value:monthlyIncome.total},
+    {name:"費用",value:monthlyCost.total},
+    {name:"純利益",value:net}
+];
 
-            const net = monthlyIncome.total - monthlyCost.total;
-            const payback = net > 0 ? Math.ceil(equipmentPrice / net) : 0;
-            const netMonths = WARRANTY_MONTHS - payback;
-            const netProfit = net * netMonths;
+return (
+<div className="min-h-screen bg-gray-50 p-6">
+<div className="max-w-7xl mx-auto space-y-6">
 
-            const chartData = [
-                { name: "収入", value: monthlyIncome.total },
-                { name: "費用", value: monthlyCost.total },
-                { name: "純利益", value: net },
-            ];
+<h1 className="text-3xl font-bold">Vatech CT ROI シミュレーター</h1>
 
-            return (
-                <div className="min-h-screen bg-gray-50 p-6">
-                    <div className="max-w-7xl mx-auto space-y-6">
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">
-                                Vatech CT ROI シミュレーター
-                            </h1>
-                            <p className="text-gray-500 mt-1">
-                                各項目を自由に調整し、投資回収期間と利益構造を可視化
-                            </p>
-                        </div>
+<div className="grid md:grid-cols-3 gap-4">
+<div className="bg-white p-4 rounded shadow">
+<p className="text-sm text-gray-500">月間純利益</p>
+<p className="text-2xl font-bold text-red-600">{currency(net)}</p>
+</div>
+<div className="bg-white p-4 rounded shadow">
+<p className="text-sm text-gray-500">投資回収期間</p>
+<p className="text-2xl font-bold">{payback} ヶ月</p>
+</div>
+<div className="bg-white p-4 rounded shadow">
+<p className="text-sm text-gray-500">ワランティ内純利益</p>
+<p className="text-2xl font-bold">{currency(netProfit)}</p>
+</div>
+</div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <KPI title="月間純利益" value={currency(net)} accent={true} />
-                            <KPI title="投資回収期間" value={`${payback} ヶ月`} />
-                            <KPI title="ワランティ内純利益" value={currency(netProfit)} />
-                        </div>
+<div className="grid xl:grid-cols-3 gap-6">
 
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            <Section title="月間収入">
-                                <IncomeEditor
-                                    label="PANO（パノラマ撮影）"
-                                    description="パノラマX線撮影による保険収入"
-                                    data={income.pano}
-                                    onChange={(v) => setIncome({ ...income, pano: v })}
-                                />
-                                <IncomeEditor
-                                    label="CT（保険）"
-                                    description="保険適用CT撮影による収入"
-                                    data={income.ctIns}
-                                    onChange={(v) => setIncome({ ...income, ctIns: v })}
-                                />
-                                <IncomeEditor
-                                    label="CT（自費）"
-                                    description="インプラント・精密診断等の自費CT撮影"
-                                    data={income.ctSelf}
-                                    onChange={(v) => setIncome({ ...income, ctSelf: v })}
-                                />
-                                <IncomeEditor
-                                    label="CEPH"
-                                    description="矯正用セファロ撮影による収入"
-                                    data={income.ceph}
-                                    onChange={(v) => setIncome({ ...income, ceph: v })}
-                                />
-                                <LabeledInput
-                                    label="その他収入"
-                                    description="紹介料・臨時撮影など"
-                                    value={income.other}
-                                    onChange={(v) => setIncome({ ...income, other: v })}
-                                />
-                                <Separator />
-                                <TotalRow label="収入合計" value={monthlyIncome.total} />
-                            </Section>
+<div className="bg-white p-5 rounded shadow space-y-3">
+<h2 className="font-semibold">CT装置価格</h2>
+<Input value={equipmentPrice} setValue={setEquipmentPrice}/>
+</div>
 
-                            <Section title="月間費用">
-                                <LabeledInput 
-                                    label="保守メンテナンス" 
-                                    value={cost.maintenance} 
-                                    onChange={(v) => setCost({ ...cost, maintenance: v })} 
-                                />
-                                <LabeledInput 
-                                    label="消耗品" 
-                                    description="（バイトビニル、手袋、アルコール）" 
-                                    value={cost.consumables} 
-                                    onChange={(v) => setCost({ ...cost, consumables: v })} 
-                                />
-                                <LabeledInput 
-                                    label="電気代" 
-                                    description="CT稼働分のみ想定" 
-                                    value={cost.electricity} 
-                                    onChange={(v) => setCost({ ...cost, electricity: v })} 
-                                />
-                                <OccupancyBlock
-                                    title="家賃配分"
-                                    description="院内設置面積分のみ按分"
-                                    base={cost.rent}
-                                    ratio={cost.rentRatio}
-                                    onBaseChange={(v) => setCost({ ...cost, rent: v })}
-                                    onRatioChange={(v) => setCost({ ...cost, rentRatio: v })}
-                                    result={monthlyCost.rent}
-                                />
-                                <OccupancyBlock
-                                    title="医師人件費配分"
-                                    description="CT診断・説明にかかる稼働分"
-                                    base={cost.doctor}
-                                    ratio={cost.doctorRatio}
-                                    onBaseChange={(v) => setCost({ ...cost, doctor: v })}
-                                    onRatioChange={(v) => setCost({ ...cost, doctorRatio: v })}
-                                    result={monthlyCost.doctor}
-                                />
-                                <OccupancyBlock
-                                    title="スタッフ人件費配分"
-                                    description="撮影・運用対応分"
-                                    base={cost.staff}
-                                    ratio={cost.staffRatio}
-                                    onBaseChange={(v) => setCost({ ...cost, staff: v })}
-                                    onRatioChange={(v) => setCost({ ...cost, staffRatio: v })}
-                                    result={monthlyCost.staff}
-                                />
-                                <LabeledInput 
-                                    label="その他費用" 
-                                    description="通信費・雑費など" 
-                                    value={cost.other} 
-                                    onChange={(v) => setCost({ ...cost, other: v })} 
-                                />
-                                <Separator />
-                                <TotalRow label="費用合計" value={monthlyCost.total} />
-                            </Section>
+<div className="bg-white p-5 rounded shadow space-y-3">
+<h2 className="font-semibold">月間費用</h2>
+<Input value={cost.maintenance} setValue={(v)=>setCost({...cost,maintenance:v})}/>
+<Input value={cost.consumables} setValue={(v)=>setCost({...cost,consumables:v})}/>
+<Input value={cost.electricity} setValue={(v)=>setCost({...cost,electricity:v})}/>
+</div>
 
-                            <Section title="投資・収支バランス">
-                                <div className="space-y-2">
-                                    <p className="font-medium text-sm">CT装置価格</p>
-                                    <p className="text-xs text-gray-500">初期導入費用（本体・基本構成）</p>
-                                    <input
-                                        type="number"
-                                        value={equipmentPrice}
-                                        onChange={(e) => setEquipmentPrice(Number(e.target.value) || 0)}
-                                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    />
-                                </div>
-                                <Separator />
-                                <ResponsiveContainer width="100%" height={240}>
-                                    <BarChart data={chartData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
-                                        <Tooltip formatter={(v) => currency(v)} />
-                                        <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                                            {chartData.map((entry, i) => (
-                                                <Cell key={i} fill={i === 2 ? "#dc2626" : "#9ca3af"} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </Section>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+<div className="bg-white p-5 rounded shadow">
+<ResponsiveContainer width="100%" height={240}>
+<BarChart data={chartData}>
+<CartesianGrid strokeDasharray="3 3"/>
+<XAxis dataKey="name"/>
+<YAxis/>
+<Tooltip formatter={(v)=>currency(v)}/>
+<Bar dataKey="value">
+{chartData.map((e,i)=>
+<Cell key={i} fill={i===2?"#dc2626":"#9ca3af"}/>
+)}
+</Bar>
+</BarChart>
+</ResponsiveContainer>
+</div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<DentalCTROICalculator />);
-    </script>
+</div>
+</div>
+</div>
+);
+}
+
+const root=ReactDOM.createRoot(document.getElementById("root"));
+root.render(<DentalCTROICalculator/>);
+
+</script>
 </body>
 </html>
+
+
 
 
