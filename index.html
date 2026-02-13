@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vatech CT ROI シミュレーター</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-7xl mx-auto space-y-6">
-
       <!-- Header -->
       <div>
         <h1 class="text-3xl font-bold tracking-tight">
@@ -18,7 +18,6 @@
           各項目を自由に調整し、投資回収期間と利益構造を可視化
         </p>
       </div>
-
       <!-- KPI -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="card border-red-600">
@@ -27,14 +26,12 @@
             <p id="kpi-net" class="text-2xl font-bold text-red-600"></p>
           </div>
         </div>
-
         <div class="card">
           <div class="card-content">
             <p class="text-sm text-gray-500">投資回収期間</p>
             <p id="kpi-payback" class="text-2xl font-bold"></p>
           </div>
         </div>
-
         <div class="card">
           <div class="card-content">
             <p class="text-sm text-gray-500">ワランティ内純利益</p>
@@ -42,17 +39,13 @@
           </div>
         </div>
       </div>
-
       <!-- Main -->
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
         <!-- Income -->
         <div class="card">
           <div class="card-content space-y-3">
             <h2 class="font-semibold text-lg">月間収入</h2>
-
             <div id="income-blocks"></div>
-
             <div class="separator"></div>
             <div class="flex justify-between font-semibold pt-2">
               <span>収入合計</span>
@@ -60,14 +53,11 @@
             </div>
           </div>
         </div>
-
         <!-- Cost -->
         <div class="card">
           <div class="card-content space-y-3">
             <h2 class="font-semibold text-lg">月間費用</h2>
-
             <div id="cost-blocks"></div>
-
             <div class="separator"></div>
             <div class="flex justify-between font-semibold pt-2">
               <span>費用合計</span>
@@ -75,16 +65,14 @@
             </div>
           </div>
         </div>
-
         <!-- Investment -->
         <div class="card">
           <div class="card-content space-y-3">
             <h2 class="font-semibold text-lg">投資・収支バランス</h2>
-
             <div class="space-y-2">
               <p class="font-medium text-sm">CT装置価格</p>
               <p class="text-xs text-gray-500">
-                初期導入費用（本体・基本構成）
+                初期導入費用(本体・基本構成)
               </p>
               <input
                 id="equipmentPrice"
@@ -93,21 +81,17 @@
                 class="input"
               />
             </div>
-
             <div class="separator"></div>
             <svg id="chart" width="100%" height="240"></svg>
           </div>
         </div>
-
       </div>
     </div>
   </div>
-
   
   <script src="app.js" defer></script>
 </body>
 </html>
-
 
 
 
