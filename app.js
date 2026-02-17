@@ -145,8 +145,8 @@ function occupancyBlock(title, desc, base, ratio, onBase, onRatio, getResult) {
 
   // 첫 번째: 금액
   inputs[0].value = formatNumber(base);
-  
-  // 두 번째: 비율 (% 표시)
+
+  // 두 번째: 비율 - 포커스 없을 때만 % 표시
   inputs[1].value = ratio === "" ? "" : `${formatNumber(ratio)}%`;
 
   // 금액 입력 핸들러
@@ -154,25 +154,43 @@ function occupancyBlock(title, desc, base, ratio, onBase, onRatio, getResult) {
   inputs[0].addEventListener('input', (e) => {
     if (isUpdatingBase) return;
     isUpdatingBase = true;
-    
+
     const v = parseNumber(e.target.value);
     onBase(v);
     e.target.value = formatNumber(v);
-    
+
     isUpdatingBase = false;
   });
 
-  // 비율 입력 핸들러
+  // 비율 입력 핸들러 - focus 중에는 % 없이 숫자만, blur 시 % 붙임
+  inputs[1].addEventListener('focus', (e) => {
+    // 포커스 시 % 제거하고 숫자만 표시 후 전체 선택
+    const v = parseNumber(e.target.value.replace(/%/g, ""));
+    e.target.value = v === 0 ? "" : String(v);
+    setTimeout(() => e.target.select(), 0); // iPad 호환을 위해 setTimeout 사용
+  });
+
+  inputs[1].addEventListener('blur', (e) => {
+    // 포커스 해제 시 % 붙여서 표시
+    const raw = e.target.value.replace(/%/g, "").replace(/[^0-9.]/g, "");
+    const v = raw === "" ? 0 : parseFloat(raw);
+    onRatio(v);
+    e.target.value = `${formatNumber(v)}%`;
+  });
+
   let isUpdatingRatio = false;
   inputs[1].addEventListener('input', (e) => {
     if (isUpdatingRatio) return;
     isUpdatingRatio = true;
-    
-    // % 제거 후 숫자만 추출
-    const v = parseNumber(e.target.value.replace(/%/g, ""));
+
+    // 입력 중에는 숫자와 소수점만 허용, % 붙이지 않음
+    const raw = e.target.value.replace(/%/g, "").replace(/[^0-9.]/g, "");
+    e.target.value = raw;
+
+    // 실시간으로 state & 결과 업데이트
+    const v = raw === "" ? 0 : parseFloat(raw);
     onRatio(v);
-    e.target.value = v === "" ? "" : `${formatNumber(v)}%`;
-    
+
     isUpdatingRatio = false;
   });
 
@@ -348,7 +366,7 @@ function init() {
 
   costWrap.append(
     inputBlock("保守メンテナンス","",state.cost.maintenance,v=>{state.cost.maintenance=v;render();}),
-    inputBlock("消耗品","(バイトビニール・手袋・アルコール)",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
+    inputBlock("消耗品","(バイトピニール・手袋・アルコール)",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
     inputBlock("電気代","CT稼働分のみ想定",state.cost.electricity,v=>{state.cost.electricity=v;render();}),
     rentBlock,
     doctorBlock,
