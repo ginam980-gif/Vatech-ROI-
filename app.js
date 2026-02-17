@@ -366,7 +366,7 @@ function init() {
 
   costWrap.append(
     inputBlock("保守メンテナンス","",state.cost.maintenance,v=>{state.cost.maintenance=v;render();}),
-    inputBlock("消耗品","(バイトピニール・手袋・アルコール)",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
+    inputBlock("消耗品","(バイトビニール・手袋・アルコール)",state.cost.consumables,v=>{state.cost.consumables=v;render();}),
     inputBlock("電気代","CT稼働分のみ想定",state.cost.electricity,v=>{state.cost.electricity=v;render();}),
     rentBlock,
     doctorBlock,
@@ -393,4 +393,5 @@ function init() {
 }
 
 init();
+
 
