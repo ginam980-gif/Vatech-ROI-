@@ -1,5 +1,13 @@
 /* ================= Constants ================= */
 const WARRANTY_MONTHS = 120;
+const EQUIPMENT_MODELS = [
+  { name: "Ace 9", price: 4480000 },
+  { name: "Smart Plus", price: 6980000 },
+  { name: "Green X 12", price: 7680000 },
+  { name: "Green X Plus", price: 12600000 },
+  { name: "Green X 21", price: 13600000 },
+];
+const DEFAULT_EQUIPMENT_MODEL = "Green X 12";
 const currency = (v) => `¥${Math.round(v).toLocaleString()}`;
 
 /* ================= Utils ================= */
@@ -11,7 +19,8 @@ const parseNumber = (v) =>
 
 /* ================= State ================= */
 const state = {
-  equipmentPrice: 7680000,
+  equipmentModel: DEFAULT_EQUIPMENT_MODEL,
+  equipmentPrice: EQUIPMENT_MODELS.find((model) => model.name === DEFAULT_EQUIPMENT_MODEL).price,
 
   income: {
     pano: { fee: 4020, perDay: 6, days: 24 },
@@ -374,8 +383,28 @@ function init() {
     inputBlock("その他費用","通信費・雑費など",state.cost.other,v=>{state.cost.other=v;render();})
   );
 
+  const equipmentModel = $("equipmentModel");
   const eq = $("equipmentPrice");
+
+  EQUIPMENT_MODELS.forEach((model) => {
+    const option = document.createElement("option");
+    option.value = model.name;
+    option.textContent = model.name;
+    equipmentModel.append(option);
+  });
+
+  equipmentModel.value = state.equipmentModel;
   eq.value = formatNumber(state.equipmentPrice);
+
+  equipmentModel.addEventListener('change', (e) => {
+    const selectedModel = EQUIPMENT_MODELS.find((model) => model.name === e.target.value);
+    if (!selectedModel) return;
+
+    state.equipmentModel = selectedModel.name;
+    state.equipmentPrice = selectedModel.price;
+    eq.value = formatNumber(state.equipmentPrice);
+    render();
+  });
   
   let isUpdatingEq = false;
   eq.addEventListener('input', (e) => {
