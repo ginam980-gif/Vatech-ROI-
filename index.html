@@ -2,102 +2,185 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0C10">
+  <meta name="description" content="Vatech CT導入の投資回収期間と利益構造をリアルタイムに試算するシミュレーター。">
   <title>Vatech CT ROI シミュレーター</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-7xl mx-auto space-y-6">
-      <!-- Header -->
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight">
-          Vatech CT ROI シミュレーター
-        </h1>
-        <p class="text-gray-500 mt-1">
-          各項目を自由に調整し、投資回収期間と利益構造を可視化
-        </p>
-      </div>
-      <!-- KPI -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="card border-red-600">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">月間純利益</p>
-            <p id="kpi-net" class="text-2xl font-bold text-red-600"></p>
-          </div>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <!-- ============ Nav ============ -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="wordmark" href="./">
+        <span class="wordmark-text">VATECH</span>
+      </a>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <span class="nav-tag">CT ROI SIMULATOR</span>
+      <span class="nav-spacer"></span>
+      <span class="nav-pill num">WARRANTY 120 MO</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ Hero ============ -->
+    <section class="hero reveal">
+      <p class="eyebrow">投資回収シミュレーション</p>
+      <h1 class="hero-title">
+        Vatech <em>ROI</em> シミュレーター
+      </h1>
+      <p class="hero-lede"><span>機種・撮影件数・院内コストを入力するだけで、</span><span>投資回収期間と保証期間内の利益構造をその場で可視化します。</span></p>
+      <ul class="hero-chips">
+        <li><span class="dot dot-brand" aria-hidden="true"></span>5機種の価格を収録</li>
+        <li><span class="dot dot-income" aria-hidden="true"></span>収入・費用を自由に調整</li>
+        <li><span class="dot dot-profit" aria-hidden="true"></span>入力と同時に再計算</li>
+      </ul>
+    </section>
+
+    <!-- ============ Sticky KPI bar ============ -->
+    <div class="kpibar-sentinel" aria-hidden="true"></div>
+    <div class="kpibar" id="kpibar">
+      <div class="kpibar-inner">
+        <div class="kpi kpi-featured" id="kpi-card-net">
+          <p class="kpi-label"><span class="dot dot-profit" aria-hidden="true"></span>月間純利益</p>
+          <p id="kpi-net" class="kpi-value num"></p>
+          <p class="kpi-note">収入合計 − 費用合計</p>
         </div>
-        <div class="card">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">投資回収期間</p>
-            <p id="kpi-payback" class="text-2xl font-bold"></p>
-          </div>
+        <div class="kpi" id="kpi-card-payback">
+          <p class="kpi-label"><span class="dot dot-gold" aria-hidden="true"></span>投資回収期間</p>
+          <p id="kpi-payback" class="kpi-value num"></p>
+          <p class="kpi-note">保証期間 120ヶ月中</p>
         </div>
-        <div class="card">
-          <div class="card-content">
-            <p class="text-sm text-gray-500">ワランティ内純利益</p>
-            <p id="kpi-profit" class="text-2xl font-bold"></p>
-          </div>
-        </div>
-      </div>
-      <!-- Main -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <!-- Income -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">月間収入</h2>
-            <div id="income-blocks"></div>
-            <div class="separator"></div>
-            <div class="flex justify-between font-semibold pt-2">
-              <span>収入合計</span>
-              <span id="income-total" class="text-red-600"></span>
-            </div>
-          </div>
-        </div>
-        <!-- Cost -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">月間費用</h2>
-            <div id="cost-blocks"></div>
-            <div class="separator"></div>
-            <div class="flex justify-between font-semibold pt-2">
-              <span>費用合計</span>
-              <span id="cost-total" class="text-red-600"></span>
-            </div>
-          </div>
-        </div>
-        <!-- Investment -->
-        <div class="card">
-          <div class="card-content space-y-3">
-            <h2 class="font-semibold text-lg">投資・収支バランス</h2>
-            <div class="space-y-2">
-              <p class="font-medium text-sm">CT装置価格</p>
-              <p class="text-xs text-gray-500">
-                機種を選択すると価格が自動反映され、価格欄は自由に変更できます
-              </p>
-              <select id="equipmentModel" class="input">
-              </select>
-              <input
-                id="equipmentPrice"
-                type="text"
-                inputmode="numeric"
-                class="input"
-              />
-            </div>
-            <div class="separator"></div>
-            <svg id="chart" width="100%" height="240"></svg>
-          </div>
+        <div class="kpi" id="kpi-card-profit">
+          <p class="kpi-label"><span class="dot dot-ink" aria-hidden="true"></span>ワランティ内純利益</p>
+          <p id="kpi-profit" class="kpi-value num"></p>
+          <p class="kpi-note">回収後の残存期間で得られる利益</p>
         </div>
       </div>
     </div>
-  </div>
-  
+
+    <!-- ============ 01 Equipment ============ -->
+    <section class="section reveal" id="sec-equipment">
+      <div class="section-head">
+        <span class="section-num num">01</span>
+        <div>
+          <h2 class="section-title">装置を選ぶ</h2>
+          <p class="section-desc">機種を選択すると価格が自動反映されます。価格欄は自由に変更できます。</p>
+        </div>
+      </div>
+
+      <div class="model-grid" id="model-chips" role="radiogroup" aria-label="CT機種"></div>
+      <label class="sr-only" for="equipmentModel">CT機種</label>
+      <select id="equipmentModel" class="sr-select" tabindex="-1" aria-hidden="true"></select>
+
+      <div class="price-row">
+        <div class="field field-lg">
+          <label class="field-label" for="equipmentPrice">CT装置価格</label>
+          <div class="input-wrap">
+            <span class="input-prefix num" aria-hidden="true">¥</span>
+            <input id="equipmentPrice" type="text" inputmode="numeric" class="input has-prefix" />
+          </div>
+        </div>
+        <p class="price-hint">
+          リース・院内負担額など、実際の投資額に置き換えて試算できます。
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 02 / 03 Income & Cost ============ -->
+    <section class="section section-flush" id="sec-flow">
+      <div class="flow-grid">
+        <article class="card reveal" id="sec-income">
+          <div class="card-head">
+            <span class="section-num num">02</span>
+            <div>
+              <h2 class="card-title">月間収入</h2>
+              <p class="card-desc">単価 × 1日撮影回数 × 月間稼働日数</p>
+            </div>
+            <span class="card-tag tag-income">INCOME</span>
+          </div>
+          <div class="card-body">
+            <div id="income-blocks" class="stack"></div>
+          </div>
+          <div class="card-foot">
+            <span class="foot-label">収入合計</span>
+            <span id="income-total" class="foot-value num income"></span>
+          </div>
+        </article>
+
+        <article class="card reveal" id="sec-cost">
+          <div class="card-head">
+            <span class="section-num num">03</span>
+            <div>
+              <h2 class="card-title">月間費用</h2>
+              <p class="card-desc">CT稼働にかかる分のみを按分して計上</p>
+            </div>
+            <span class="card-tag tag-cost">COST</span>
+          </div>
+          <div class="card-body">
+            <div id="cost-blocks" class="stack"></div>
+          </div>
+          <div class="card-foot">
+            <span class="foot-label">費用合計</span>
+            <span id="cost-total" class="foot-value num cost"></span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ 04 Balance ============ -->
+    <section class="section reveal" id="sec-balance">
+      <div class="section-head">
+        <span class="section-num num">04</span>
+        <div>
+          <h2 class="section-title">収支バランスと回収カーブ</h2>
+          <p class="section-desc">月間の収支構造と、保証期間120ヶ月における累積損益の推移。</p>
+        </div>
+      </div>
+
+      <div class="balance-grid">
+        <article class="card card-chart">
+          <div class="chart-head">
+            <h3 class="chart-title">月間収支</h3>
+            <ul class="legend">
+              <li><span class="swatch sw-income" aria-hidden="true"></span>収入</li>
+              <li><span class="swatch sw-cost" aria-hidden="true"></span>費用</li>
+              <li><span class="swatch sw-profit" aria-hidden="true"></span>純利益</li>
+            </ul>
+          </div>
+          <svg id="chart" viewBox="0 0 360 250" preserveAspectRatio="xMidYMid meet"
+            role="img" aria-label="月間の収入・費用・純利益の比較グラフ"></svg>
+        </article>
+
+        <article class="card card-chart">
+          <div class="chart-head">
+            <h3 class="chart-title">累積損益カーブ</h3>
+            <span class="chart-meta num">0 – 120 MONTHS</span>
+          </div>
+          <svg id="timeline" viewBox="0 0 460 250" preserveAspectRatio="xMidYMid meet"
+            role="img" aria-label="120ヶ月の累積損益推移と投資回収時点"></svg>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-brand">Vatech CT ROI シミュレーター</p>
+        <p class="footer-note">本試算は入力値に基づく参考値です。実際の収益を保証するものではありません。</p>
+      </div>
+      <span class="nav-pill num">WARRANTY 120 MONTHS</span>
+    </div>
+  </footer>
+
   <script src="app.js" defer></script>
 </body>
 </html>
-
-
-
-
-
-
-
